@@ -1,0 +1,20 @@
+steps:
+  - name: "gcr.io/cloud-builders/npm"
+    args: ["install"]
+  - name: "gcr.io/cloud-builders/npm"
+    args: ["run", "build"]
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ["run", "create-env"]
+    env:
+      - 'GITHUB_APP_ID=${_GITHUB_APP_ID}'
+      - 'GITHUB_APP_NAME=${_GITHUB_APP_NAME}'
+      - 'GITHUB_APP_CLIENT_ID=${_GITHUB_APP_CLIENT_ID}'
+      - 'GITHUB_APP_CLIENT_SECRET=${_GITHUB_APP_CLIENT_SECRET}'
+      - 'SQLITE_URL=${_SQLITE_URL}'
+      - 'SQLITE_AUTH_TOKEN=${_SQLITE_AUTH_TOKEN}'
+      - 'GITHUB_APP_PRIVATE_KEY=${_GITHUB_APP_PRIVATE_KEY}'
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['run', 'test']
+  - name: "gcr.io/cloud-builders/gcloud"
+    args: ["app", "deploy"]
+timeout: "1800s"
