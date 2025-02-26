@@ -1,0 +1,46 @@
+steps:
+  - name: "node:18"
+    entrypoint: npm
+    args: ["install"]
+  - name: "node:18"
+    entrypoint: npm
+    args: ["run", "create-env"]
+    env:
+      - 'GITHUB_APP_ID=${_GITHUB_APP_ID}'
+      - 'GITHUB_APP_NAME=${_GITHUB_APP_NAME}'
+      - 'GITHUB_APP_CLIENT_ID=${_GITHUB_APP_CLIENT_ID}'
+      - 'GITHUB_APP_CLIENT_SECRET=${_GITHUB_APP_CLIENT_SECRET}'
+      - 'SQLITE_URL=${_SQLITE_URL}'
+      - 'SQLITE_AUTH_TOKEN=${_SQLITE_AUTH_TOKEN}'
+      - 'GITHUB_APP_PRIVATE_KEY=${_GITHUB_APP_PRIVATE_KEY}'
+      - 'RESEND_API_KEY=${_RESEND_API_KEY}'
+      - 'CRYPTO_KEY=${_CRYPTO_KEY}'
+  - name: "node:18"
+    entrypoint: npm
+    args: ["run", "build"]      
+  - name: "node:18"
+    entrypoint: npm
+    args: ['run', 'test']
+  - name: "node:18"
+    entrypoint: npm
+    args: ["run", "db:migrate"]    
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "gcr.io/$PROJECT_ID/kurashi-blog-cms:latest", "."]
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/kurashi-blog-cms:latest"]
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "kurashi-blog-cms"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/kurashi-blog-cms:latest"
+      - "--region"
+      - "us-central1"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"   
+options:
+  logging: CLOUD_LOGGING_ONLY    
+timeout: "1800s"

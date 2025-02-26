@@ -9,11 +9,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && npm run db:migrate",
+    "build": "dotenv -e .env -- next build && npm run db:migrate",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "npx drizzle-kit generate",
-    "db:migrate": "npx drizzle-kit migrate"
+    "db:migrate": "npx drizzle-kit migrate",
+    "create-env": "printenv > .env",
+    "test": "echo testing"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.9",
@@ -66,6 +68,8 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
+    "dotenv": "^16.4.7",
+    "dotenv-cli": "^8.0.0",
     "drizzle-orm": "^0.31.2",
     "install": "^0.13.0",
     "joplin-turndown-plugin-gfm": "^1.0.12",
