@@ -17,4 +17,6 @@ steps:
     args: ['run', 'test']
   - name: "gcr.io/cloud-builders/gcloud"
     args: ["app", "deploy"]
+options:
+  logging: CLOUD_LOGGING_ONLY    
 timeout: "1800s"
