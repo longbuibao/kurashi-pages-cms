@@ -14,7 +14,8 @@
     "lint": "next lint",
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "npx drizzle-kit migrate",
-    "create-env": "printenv > .env"
+    "create-env": "printenv > .env",
+    "test": "echo testing"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.9",
