@@ -1,7 +1,9 @@
 steps:
-  - name: "gcr.io/cloud-builders/npm"
+  - name: "node:18"
+    entrypoint: npm
     args: ["install"]
-  - name: 'gcr.io/cloud-builders/npm'
+  - name: "node:18"
+    entrypoint: npm
     args: ["run", "create-env"]
     env:
       - 'GITHUB_APP_ID=${_GITHUB_APP_ID}'
@@ -11,14 +13,18 @@ steps:
       - 'SQLITE_URL=${_SQLITE_URL}'
       - 'SQLITE_AUTH_TOKEN=${_SQLITE_AUTH_TOKEN}'
       - 'GITHUB_APP_PRIVATE_KEY=${_GITHUB_APP_PRIVATE_KEY}'
-  - name: "gcr.io/cloud-builders/npm"
+  - name: "node:18"
+    entrypoint: npm
     args: ["run", "build"]      
-  - name: 'gcr.io/cloud-builders/npm'
+  - name: "node:18"
+    entrypoint: npm
     args: ['run', 'test']
-  - name: "bash"
-    args: ["chmod", "+x", "run.sh"]    
-  - name: "bash"
-    args: ["sh", "run.sh"]
+  - name: "node:18"
+    entrypoint: npm
+    args: ["run", "db:migrate"]    
+  - name: "node:18"
+    entrypoint: npm
+    args: ["run", "start"]
 options:
   logging: CLOUD_LOGGING_ONLY    
 timeout: "1800s"
