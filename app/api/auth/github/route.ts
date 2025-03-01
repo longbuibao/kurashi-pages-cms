@@ -78,7 +78,8 @@ export async function GET(request: Request): Promise<Response> {
 				Location: "/"
 			}
 		});
-	} catch (e) {		
+	} catch (e) {
+		throw e		
     // the specific error message depends on the provider
 		if (e instanceof OAuth2RequestError) {
 			// invalid code
