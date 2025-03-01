@@ -13,6 +13,7 @@ steps:
       - 'SQLITE_URL=${_SQLITE_URL}'
       - 'SQLITE_AUTH_TOKEN=${_SQLITE_AUTH_TOKEN}'
       - 'GITHUB_APP_PRIVATE_KEY=${_GITHUB_APP_PRIVATE_KEY}'
+      - 'RESEND_API_KEY=${_RESEND_API_KEY}'
   - name: "node:18"
     entrypoint: npm
     args: ["run", "build"]      
