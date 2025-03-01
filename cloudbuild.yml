@@ -15,9 +15,9 @@ steps:
     args: ["run", "build"]      
   - name: 'gcr.io/cloud-builders/npm'
     args: ['run', 'test']
-  - name: "gcr.io/cloud-builders/bash"
+  - name: "bash"
     args: ["chmod", "+x", "run.sh"]    
-  - name: "gcr.io/cloud-builders/bash"
+  - name: "bash"
     args: ["sh", "run.sh"]
 options:
   logging: CLOUD_LOGGING_ONLY    
