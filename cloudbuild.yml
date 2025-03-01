@@ -22,9 +22,6 @@ steps:
   - name: "node:18"
     entrypoint: npm
     args: ["run", "db:migrate"]    
-  - name: "node:18"
-    entrypoint: npm
-    args: ["run", "start"]
   - name: "gcr.io/cloud-builders/docker"
     args: ["build", "-t", "gcr.io/$PROJECT_ID/kurashi-blog-cms:latest", "."]
   - name: "gcr.io/cloud-builders/docker"
