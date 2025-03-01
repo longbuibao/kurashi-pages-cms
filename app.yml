@@ -1,7 +1,0 @@
-runtime: nodejs20  # Use the latest Node.js version supported
-env: standard
-instance_class: F1  # Choose an instance type
-
-handlers:
-  - url: /.*
-    script: auto
