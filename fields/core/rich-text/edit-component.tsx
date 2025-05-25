@@ -12,6 +12,7 @@ import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
+import Youtube from "@tiptap/extension-youtube";
 import { useConfig } from "@/contexts/config-context";
 import { useRepo } from "@/contexts/repo-context";
 import { getRawUrl, relativeToRawUrls } from "@/lib/githubImage";
@@ -61,6 +62,7 @@ import {
 import { toast } from "sonner";
 import { getSchemaByName } from "@/lib/schema";
 import { extensionCategories, normalizePath } from "@/lib/utils/file";
+import {YoutubeDialog, YoutubeDialogHandle} from "@/components/youtube-dialog";
 
 const EditComponent = forwardRef((props: any, ref) => {
   const { config } = useConfig();
@@ -106,6 +108,7 @@ const EditComponent = forwardRef((props: any, ref) => {
 
   const mediaDialogRef = useRef<MediaDialogHandle>(null);
   const bubbleMenuRef = useRef<HTMLDivElement | null>(null);
+  const youtubeDialogRef = useRef<YoutubeDialogHandle>(null);
 
   const [isContentReady, setContentReady] = useState(false);
 
@@ -115,6 +118,10 @@ const EditComponent = forwardRef((props: any, ref) => {
   const openMediaDialog = mediaConfig?.input
     ? () => { if (mediaDialogRef.current) mediaDialogRef.current.open() }
     : undefined;
+
+  const openYoutubeDialog = () => {
+    return youtubeDialogRef.current?.open();
+  };
 
   const rootPath = useMemo(() => {
     if (!field.options?.path) {
@@ -160,14 +167,17 @@ const EditComponent = forwardRef((props: any, ref) => {
         placeholder: "Type '/' for commands…",
       }),
       Commands.configure({
-        suggestion: suggestion(openMediaDialog)
+        suggestion: suggestion(openMediaDialog, openYoutubeDialog)
       }),
       Table,
       TableRow,
       TableHeader,
       TableCell,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Underline
+      Underline,
+      Youtube.configure({
+        nocookie: true,
+      }),
     ],
     content: "<p></p>",
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -186,6 +196,13 @@ const EditComponent = forwardRef((props: any, ref) => {
       setContentReady(true);
     }
   });
+
+  const handleYoutubeSubmit = useCallback((url: string) => {
+    if (!editor) return;
+    const youtubeVideo = `<div data-youtube-video><iframe src="${url}"></iframe></div>`
+    editor.chain().focus().insertContent(youtubeVideo).run();
+  }, [editor]);
+
 
   const handleMediaDialogSubmit = useCallback(async (images: string[]) => {
     if (config && editor) {
@@ -487,6 +504,7 @@ const EditComponent = forwardRef((props: any, ref) => {
           selected={[]} 
           onSubmit={handleMediaDialogSubmit} 
         />
+        <YoutubeDialog ref={youtubeDialogRef} onSubmit={handleYoutubeSubmit} />
       </div>
     </>
   )

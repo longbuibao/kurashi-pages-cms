@@ -11,15 +11,32 @@ import {
   ListOrdered,
   Pilcrow,
   Quote,
-  Table
+  Table,
+  Video
 } from "lucide-react";
 
 
 // TODO: add keywords to make search more flexible?
-export default function suggestion(openMediaDialog) {
+export default function suggestion(openMediaDialog, openYoutubeDialog) {
   return {
     items: ({ query }) => {
       let suggestionsArray = [
+        {
+          icon: <Video className="h-4 w-4" />,
+          title: "Youtube",
+          command: async ({ editor, range }) => {
+            editor.chain().focus().deleteRange(range).run();
+
+            const url = await openYoutubeDialog?.();
+            if (!url) return;
+
+            editor.chain().focus().setYoutubeVideo({
+              src: url,
+              width: 640,
+              height: 480,
+            }).run();
+          },
+        },
         {
           icon: <Pilcrow className="h-4 w-4"/>,
           title: "Text",
