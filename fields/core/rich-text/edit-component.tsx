@@ -511,7 +511,7 @@ const EditComponent = forwardRef((props: any, ref) => {
           extensions={allowedExtensions}
           selected={[]} 
           onSubmit={handleMediaDialogSubmit} 
-        />
+        />}
         <YoutubeDialog ref={youtubeDialogRef} onSubmit={handleYoutubeSubmit} />
       </div>
     </>
