@@ -55,7 +55,7 @@ export async function GET(
       if (normalizedPath !== schema.path) throw new Error(`Invalid path "${path}" for collection "${params.name}".`);
     }
 
-    let entries = await getCollectionCache(params.owner, params.repo, params.branch, normalizedPath, token);
+    let entries = await getCollectionCache(params.owner, params.repo, params.branch, normalizedPath, token, schema.view?.node?.filename);
     
     let data: {
       contents: Record<string, any>[],
@@ -64,6 +64,27 @@ export async function GET(
       contents: [],
       errors: []
     };
+
+    if (schema.view?.node?.filename) {
+      // Remove node entries from subfolders
+      entries = entries.filter((item: any) => item.isNode || item.parentPath === schema.path || item.name !== schema.view.node.filename);
+    }
+
+    if (['all', 'nodes', 'others'].includes(schema.view?.node?.hideDirs)) {
+      if (schema.view.node.hideDirs === "all") {
+        // Remove all dirs
+        entries = entries.filter((item: any) => item.type !== "dir");
+      } else if (["nodes", "others"].includes(schema.view.node.hideDirs)) {
+        // Remove node dirs or non node dirs
+        entries = entries.filter((item: any) =>
+          item.type !== "dir" ||
+          (schema.view.node.hideDirs === "others"
+            ? entries.some((subItem: any) => subItem.parentPath === item.path && subItem.isNode)
+            : !entries.some((subItem: any) => subItem.parentPath === item.path && subItem.isNode)
+          )
+        );
+      }
+    }
     
     if (entries) {
       data = parseContents(entries, schema, config);
@@ -140,7 +161,13 @@ const parseContents = (
         // If we are dealing with a serialized format and we have fields defined
         try {
           contentObject = parse(item.content, { format: schema.format, delimiters: schema.delimiters });
-          contentObject = deepMap(contentObject, schema.fields, (value, field) => readFns[field.type] ? readFns[field.type](value, field, config) : value);
+          // TODO: review if this works for blocks
+          contentObject = deepMap(contentObject, schema.fields, (value, field) => {
+            if (typeof field.type === 'string' && readFns[field.type]) {
+              return readFns[field.type](value, field, config);
+            }
+            return value;
+          });
         } catch (error: any) {
           // TODO: send this to the client?
           console.error(`Error parsing frontmatter for file "${item.path}": ${error.message}`);
@@ -162,18 +189,22 @@ const parseContents = (
           contentObject.date = filenameDate.string;
         }
       }
+      
       // TODO: handle proper returns
       return {
         sha: item.sha,
         name: item.name,
+        parentPath: item.parentPath,
         path: item.path,
         content: item.content,
         fields: contentObject,
         type: "file",
+        isNode: item.isNode,
       };
     } else if (item.type === "dir" && !excludedFiles.includes(item.name) && schema.subfolders !== false) {
       return {
         name: item.name,
+        parentPath: item.parentPath,
         path: item.path,
         type: "dir",
       };

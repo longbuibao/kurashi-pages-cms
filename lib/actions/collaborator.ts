@@ -5,6 +5,7 @@ import { getInstallations, getInstallationRepos } from "@/lib/githubApp";
 import { getUserToken } from "@/lib/token";
 import { InviteEmailTemplate } from "@/components/email/invite";
 import { Resend } from "resend";
+import { createLoginToken } from "@/lib/actions/auth";
 import { db } from "@/db";
 import { and, eq} from "drizzle-orm";
 import { collaboratorTable } from "@/db/schema";
@@ -53,34 +54,34 @@ const handleAddCollaborator = async (prevState: any, formData: FormData) => {
 		});
 		if (collaborator) throw new Error(`${email} is already invited to "${owner}/${repo}".`);
 
+    const loginToken = await createLoginToken(email as string);
 		const baseUrl = process.env.BASE_URL
 			? process.env.BASE_URL
 			: process.env.VERCEL_PROJECT_PRODUCTION_URL
 				? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
 				: "";
+    const inviteUrl = `${baseUrl}/sign-in/collaborator/${loginToken}?redirect=/${owner}/${repo}`;
 
 		const resend = new Resend(process.env.RESEND_API_KEY);
 
-		Promise.resolve().then(async () => {
-      const { data, error } = await resend.emails.send({
-				from: process.env.RESEND_FROM_EMAIL!,
-				to: [email],
-				subject: `Join "${owner}/${repo}" on Pages CMS`,
-				react: InviteEmailTemplate({
-					repoUrl: `${baseUrl}/${owner}/${repo}`,
-					repoName: `${formData.get("owner")}/${formData.get("repo")}`,
-					email: email,
-					invitedByName: user.githubName || user.githubUsername,
-					invitedByUrl: `https://github.com/${user.githubUsername}`,
-				}),
-			});
-	
-			if (error) {
-				console.error(`Failed to send invitation email to ${email}:`, error.message);
-				throw new Error(error.message);
-			}
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL!,
+      to: [email],
+      subject: `Join "${owner}/${repo}" on Pages CMS`,
+      react: InviteEmailTemplate({
+        inviteUrl,
+        repoName: `${formData.get("owner")}/${formData.get("repo")}`,
+        email: email,
+        invitedByName: user.githubName || user.githubUsername,
+        invitedByUrl: `https://github.com/${user.githubUsername}`,
+      }),
     });
 
+    if (error) {
+      console.error(`Failed to send invitation email to ${email}:`, error.message);
+      throw new Error(error.message);
+    }
+    
 		const newCollaborator = await db.insert(collaboratorTable).values({
 			type: installationRepos[0].owner.type === "User" ? "user" : "org",
 			installationId: installations[0].id,

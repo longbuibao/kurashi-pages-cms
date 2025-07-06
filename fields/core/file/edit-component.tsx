@@ -131,12 +131,11 @@ const EditComponent = forwardRef((props: any, ref: React.Ref<HTMLInputElement>) 
   );
 
   const mediaConfig = useMemo(() => {
-    if (!config?.object?.media?.length) {
-      return undefined;
-    }
-    return field.options?.media
-      ? getSchemaByName(config.object, field.options?.media, "media")
-      : config.object.media[0];
+    return (config?.object?.media?.length && field.options?.media !== false)
+      ? field.options?.media && typeof field.options.media === 'string'
+        ? getSchemaByName(config.object, field.options.media, "media")
+        : config.object.media[0]
+      : undefined;
   }, [field.options?.media, config?.object]);
 
   const rootPath = useMemo(() => {
@@ -172,13 +171,13 @@ const EditComponent = forwardRef((props: any, ref: React.Ref<HTMLInputElement>) 
   }, [field.options?.extensions, field.options?.categories, mediaConfig]);
 
   const isMultiple = useMemo(() => 
-    field.options?.multiple === true,
+    !!field.options?.multiple,
     [field.options?.multiple]
   );
 
   const remainingSlots = useMemo(() => 
     field.options?.multiple
-      ? field.options.multiple.max
+      ? (typeof field.options.multiple === 'object' && field.options.multiple.max)
         ? field.options.multiple.max - files.length
         : Infinity
       : 1 - files.length,
@@ -276,7 +275,7 @@ const EditComponent = forwardRef((props: any, ref: React.Ref<HTMLInputElement>) 
 
   if (!mediaConfig) {
     return (
-      <div className="text-muted-foreground bg-muted rounded-md px-3 py-2 h-10">
+      <p className="text-muted-foreground bg-muted rounded-md px-3 py-2">
       No media configuration found. {' '}
       <a 
         href={`/${config?.owner}/${config?.repo}/${encodeURIComponent(config?.branch || "")}/settings`}
@@ -284,7 +283,7 @@ const EditComponent = forwardRef((props: any, ref: React.Ref<HTMLInputElement>) 
       >
         Check your settings
       </a>.
-    </div>
+    </p>
     );
   }
 

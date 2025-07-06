@@ -64,7 +64,7 @@ const RepoNav = ({
       label: item.label || item.name || "Media"
     })) || [];
 
-    const settingsItem = configObject.settings !== false
+    const settingsItem = !configObject.settings?.hide
       ? {
         key: "settings",
         icon: <Settings className="h-5 w-5 mr-2" />,
@@ -88,7 +88,7 @@ const RepoNav = ({
       settingsItem,
       collaboratorsItem
     ].filter(Boolean);
-  }, [config]);
+  }, [config, user?.githubId]);
 
   if (!items.length) return null;
 

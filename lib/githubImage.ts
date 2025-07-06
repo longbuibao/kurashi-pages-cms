@@ -6,9 +6,9 @@
 
 import { getFileName, getParentPath } from "@/lib/utils/file";
 
-const ttl = 10000; // TTL for the cache (in milliseconds)
+const ttl = 30000; // TTL for the cache (30 seconds)
 const cache: { [key: string]: any } = {};
-const requests: { [key: string]: Promise<any> } = {};
+const requests: { [key: string]: Promise<any> | undefined } = {};
 
 // Get the relative path for an image.
 const getRelativeUrl = (
@@ -48,7 +48,23 @@ const getRawUrl = async (
     
     const parentFullPath = `${owner}/${repo}/${encodeURIComponent(branch)}/${parentPath}`;
     
-    if (!cache[parentFullPath]?.files?.[filename] || (Date.now() - (cache[parentFullPath]?.time || 0) > ttl)) {
+    if (requests[parentFullPath]) {
+      try {
+        await requests[parentFullPath];
+      } finally {
+        delete requests[parentFullPath];
+      }
+      return cache[parentFullPath]?.files?.[filename];
+    }
+
+    const cacheExists = cache[parentFullPath]?.files?.[filename];
+    const cacheExpired = !cache[parentFullPath]?.time || (Date.now() - cache[parentFullPath].time > ttl);
+    
+    if (cacheExists && !cacheExpired) {
+      return cache[parentFullPath].files[filename];
+    }
+    
+    if (cacheExpired || !cacheExists) {
       delete cache[parentFullPath];
       
       if (!requests[parentFullPath]) {
@@ -57,10 +73,19 @@ const getRawUrl = async (
             if (!response.ok) throw new Error(`Failed to fetch media: ${response.status} ${response.statusText}`);
             
             return response.json();
+          })
+          .catch(err => {
+            delete requests[parentFullPath];
+            throw err;
           });
       }
 
-      const response = await requests[parentFullPath];
+      let response;
+      try {
+        response = await requests[parentFullPath];
+      } finally {
+        delete requests[parentFullPath];
+      }
       
       if (!cache[parentFullPath] && response.status === "success") {
         cache[parentFullPath] = {
@@ -73,8 +98,6 @@ const getRawUrl = async (
       } else if (response.status === "error") {
         throw new Error(response.message);
       }
-
-      delete requests[parentFullPath];
     }
 
     return cache[parentFullPath]?.files?.[filename];

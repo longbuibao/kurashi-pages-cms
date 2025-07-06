@@ -13,7 +13,7 @@ import {
 } from "@/lib/utils/file";
 import { EmptyCreate } from "@/components/empty-create";
 import { FolderCreate} from "@/components/folder-create";
-import { FileOptions } from "@/components/file-options";
+import { FileOptions } from "@/components/file/file-options";
 import { PathBreadcrumb } from "@/components/path-breadcrumb";
 import { MediaUpload} from "./media-upload";
 import { Message } from "@/components/message";
@@ -37,6 +37,7 @@ const MediaView = ({
   initialSelected,
   maxSelected,
   onSelect,
+  onUpload,
   extensions
 }: {
   media: string,
@@ -44,6 +45,7 @@ const MediaView = ({
   initialSelected?: string[],
   maxSelected?: number,
   onSelect?: (newSelected: string[]) => void,
+  onUpload?: (entry: any) => void,
   extensions?: string[]
 }) => {
   const { config } = useConfig();
@@ -74,6 +76,11 @@ const MediaView = ({
 
   const [error, setError] = useState<string | null | undefined>(null);
   const [selected, setSelected] = useState(initialSelected || []);
+
+  useEffect(() => {
+    setSelected(initialSelected || []);
+  }, [initialSelected]);
+
   const [path, setPath] = useState(() => {
     if (!mediaConfig) return "";
     if (!initialPath) return mediaConfig.input;
@@ -121,14 +128,15 @@ const MediaView = ({
     }
     fetchMedia();
     
-  }, [config, path]);
+  }, [config, path, mediaConfig.name]);
 
   const handleUpload = useCallback((entry: any) => {
     setData((prevData) => {
       if (!prevData) return [entry];
       return sortFiles([...prevData, entry]);
     });
-  }, []);
+    if (onUpload) onUpload(entry);
+  }, [onUpload]);
 
   const handleDelete = useCallback((path: string) => {
     setData((prevData) => prevData?.filter((item) => item.path !== path));
@@ -191,11 +199,13 @@ const MediaView = ({
         ? newSelected.filter(item => item !== path)
         : [...newSelected, path];
       
-      if (onSelect) onSelect(newSelected);
-      
       return newSelected;
     });
-  }, [onSelect, maxSelected]);
+  }, [maxSelected]);
+
+  useEffect(() => {
+    if (onSelect) onSelect(selected);
+  }, [selected, onSelect]);
 
   const loadingSkeleton = useMemo(() => (
     <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
